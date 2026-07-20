@@ -1,0 +1,32 @@
+.DS_Store
+.idea/
+.vscode/
+__pycache__/
+.ipynb_checkpoints/
+*.pyc
+.git_backups/
+
+# Local dataset root (keep data/README.md tracked)
+/data/*
+!data/README.md
+
+# Large datasets / outputs
+**/datasets/
+**/checkpoints/
+**/saved/
+**/outputs/
+**/mlruns/
+**/results_inference/
+**/results_postprocess/
+
+# Large artifacts
+*.h5
+*.hdf5
+*.npz
+*.pth
+*.pt
+*.ckpt
+*.tar
+*.zip
+*.mp4
+*.avi

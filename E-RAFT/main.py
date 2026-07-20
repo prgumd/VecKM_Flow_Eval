@@ -81,6 +81,7 @@ def test(args):
         loader.summary(logger)
         test_set = loader.get_test_dataset()
         additional_loader_returns = {'name_mapping_test': loader.get_name_mapping_test()}
+        # print(additional_loader_returns)
     
     # Case: MVSEC Dataset
     else:

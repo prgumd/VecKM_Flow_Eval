@@ -732,8 +732,20 @@ def calculate_flow_error_numpy(
 
     errors = {}
 
+    pred_masked_transposed = np.squeeze(np.transpose(pred_masked, (0, 2, 3, 1)), axis=0)
+    pred_masked_transposed = np.where(pred_masked_transposed == 0, np.nan, pred_masked_transposed)
+    gt_masked_transposed = np.squeeze(np.transpose(gt_masked, (0, 2, 3, 1)), axis=0)
+    gt_masked_transposed = np.where(gt_masked_transposed == 0, np.nan, gt_masked_transposed)
+
+    quasi_dot_product = np.sum(gt_masked_transposed * pred_masked_transposed, axis=-1)
+    quasi_magnitude_gt = np.sqrt(np.sum(gt_masked_transposed ** 2, axis=-1))
+    quasi_projection = quasi_dot_product / quasi_magnitude_gt
+    quasi_error = quasi_magnitude_gt - quasi_projection
+    quasi_error_mean = np.nanmean(np.abs(quasi_error))
+
     # Average endpoint error.
     endpoint_error = np.linalg.norm(gt_masked - pred_masked, axis=1)
+    errors["QME"] = quasi_error_mean
     errors["EPE"] = np.mean(np.sum(endpoint_error, axis=(1, 2)) / n_points)
     errors["1PE"] = np.mean(np.sum(endpoint_error > 1, axis=(1, 2)) / n_points)
     errors["2PE"] = np.mean(np.sum(endpoint_error > 2, axis=(1, 2)) / n_points)

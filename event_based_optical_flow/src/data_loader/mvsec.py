@@ -25,7 +25,7 @@ def h5py_loader(path: str):
     data = h5py.File(path, "r")
     event_timestamp = get_timestamp_index(data)
     r = {
-        "event": np.array(data["davis"]["right"]["events"], dtype=np.int16),
+        "event": np.array(data["davis"]["left"]["events"], dtype=np.int16),
     }
     # 'gray_ts': np.array(data['davis']['right']['image_raw_ts'], dtype=np.float64)
     l = {
@@ -46,7 +46,7 @@ def get_timestamp_index(h5py_data):
         timestamp (dict) ... Doctionary of numpy arrays. Keys are "left" / "right".
     """
     timestamp = {}
-    timestamp["right"] = np.array(h5py_data["davis"]["right"]["events"][:, 2])
+    timestamp["right"] = np.array(h5py_data["davis"]["left"]["events"][:, 2])
     timestamp["left"] = np.array(h5py_data["davis"]["left"]["events"][:, 2])
     return timestamp
 
@@ -126,7 +126,7 @@ class MvsecDataLoader(DataLoaderBase):
 
     def omit_invalid_data(self, sequence_name: str):
         logger.info(f"Use only valid frames.")
-        first_valid_gt_frame = 0
+        first_valid_gt_frame = 1
         last_valid_gt_frame = -1
         if "indoor_flying1" in sequence_name:
             first_valid_gt_frame = 60

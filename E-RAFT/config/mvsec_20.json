@@ -3,7 +3,7 @@
     "cuda": true,
     "gpu": 0,
     "subtype": "warm_start",
-    "save_dir": "saved",
+    "save_dir": "./outputs/e-raft",
     "data_loader": {
         "test": {
             "args": {
@@ -13,23 +13,23 @@
                 "num_voxel_bins": 15,
                 "align_to": "depth",
                 "datasets": {
-                    "outdoor_day": [
-                        1
+                    "03": [
+                        40
                     ]
                 },
                 "filter": {
-                    "outdoor_day": {
-                        "1": "range(4356, 4706)"
+                    "03": {
+                        "40": "range(0, 2058)"
                     }
                 },
                 "transforms": [
                     "EventSequenceToVoxelGrid_Pytorch(num_bins=15, normalize=True, gpu=True)",
-                    "RandomCropping(crop_height=256, crop_width=256, fixed=True)"
+                    "RandomCropping(crop_height=480, crop_width=640, fixed=True)"
                 ]
             }
         }
     },
     "test": {
-        "checkpoint": "checkpoints/mvsec_20.tar"
+        "checkpoint": "checkpoints/dsec.tar"
     }
 }

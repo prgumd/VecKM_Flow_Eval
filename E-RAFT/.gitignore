@@ -3,9 +3,9 @@
 __pycache__/
 venv/
 datasets/
-saved/*
+saved/
 statistics*
 utils/login_credentials.json
 build/
-checkpoints/*.tar
+checkpoints/
 !config/examples

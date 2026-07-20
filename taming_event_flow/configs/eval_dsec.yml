@@ -1,7 +1,7 @@
 data:
-    path: ../datasets/dsec_benchmark_aug
-    mode: gtflow  # events/time/gtflow
-    window: 0.1
+    path: ../data/hdf5
+    mode: time  # events/time/gtflow
+    window: 0.01666667
     passes_loss: 10
     cache: False
 
@@ -17,10 +17,11 @@ metrics:
     name: ["FWL", "RSAT", "AEE"]
 
 vis:
-    enabled: False
+    enabled: True
     px: 400
     bars: True
     store: True
-    mask_output: False
-    dynamic: True
-    show: ["flow_bw"]  # Null for everything
+    mask_output: True
+    dynamic: False
+#    show: ["flow_bw"]  # Null for everything
+    show: Null

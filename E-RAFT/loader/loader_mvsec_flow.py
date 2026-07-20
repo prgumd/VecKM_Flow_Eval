@@ -29,16 +29,19 @@ class MvsecFlow(Dataset):
         #                   Sparse -> Valid where GT & Events exist
         self.evaluation_type = 'dense'
 
-        self.image_width = 346
-        self.image_height = 260
+        # self.image_width = 346
+        # self.image_height = 260
+
+        self.image_width = 640
+        self.image_height = 480
 
         self.voxel = EventSequenceToVoxelGrid_Pytorch(
             num_bins=args['num_voxel_bins'], 
             normalize=True, 
             gpu=True
         )
-        self.cropper = transforms.CenterCrop((256,256))
-
+        # self.cropper = transforms.CenterCrop((256,256))
+        self.cropper = transforms.CenterCrop((self.image_height, self.image_width))
     def summary(self, logger):
         logger.write_line("================================== Dataloader Summary ====================================", True)
         logger.write_line("Loader Type:\t\t" + self.__class__.__name__ + " for {}".format(self.type), True)
@@ -167,6 +170,10 @@ class MvsecFlow(Dataset):
             events_old = get_events(event_path_old)
             events_new = get_events(event_path_new)
 
+            # # time reversed
+            # events_old = get_events(event_path_new)
+            # events_new = get_events(event_path_old)
+
             # Timestamp multiplier of 1e6 because the timestamps are saved as seconds and we're used to microseconds
             # This can be relevant for the voxel grid!
             ev_seq_old = EventSequence(events_old, params, timestamp_multiplier=1e6, convert_to_relative=True)
@@ -189,10 +196,12 @@ class MvsecFlow(Dataset):
             raise Exception("Input Type not defined properly! Check config file.")
 
         # Check Timestamps
+        print(event_path_new)
         ev = get_events(event_path_new).to_numpy()
         ts_ev_min = numpy.min(ev[:,0])
         ts_ev_max = numpy.max(ev[:,0])
-        assert(ts_ev_min > ts_old and ts_ev_max <= ts_new)
+        # print(ts_ev_min, ts_ev_max, ts_old, ts_new)
+        # assert(ts_ev_min > ts_old and ts_ev_max <= ts_new)
 
         # plot images
         '''
@@ -300,6 +309,21 @@ class MvsecFlow(Dataset):
         sample['event_volume_new'] = self.cropper(sample['event_volume_new'])
         sample['event_volume_old'] = self.cropper(sample['event_volume_old'])
 
+        # for key in sample:
+        #     if isinstance(sample[key], torch.Tensor):
+        #         # Flip the tensor along the vertical axis (dimension -2 for a 2D image)
+        #         # print(sample[key].shape)
+        #
+        #         # #updown flipped
+        #         # sample[key] = torch.flip(sample[key], [-2])
+        #
+        #         # time reversed
+        #         sample['event_volume_new'] = -torch.flip(sample['event_volume_new'], [-3])
+        #         sample['event_volume_old'] = -torch.flip(sample['event_volume_old'], [-3])
+        # # time reversed
+        # sample['flow'][1,:,:] = -sample['flow'][1,:,:]
+        # sample['flow'][0, :, :] = -sample['flow'][0, :, :]
+
         return sample
 
 class MvsecFlowRecurrent(Dataset):
@@ -322,6 +346,10 @@ class MvsecFlowRecurrent(Dataset):
         # ----------------------------------------------------------------------------- #
         assert(idx >= 0)
         assert(idx < len(self))
+
+        # #time reversed
+        # idx = 1396-idx
+
         sequence = []
         j = idx * self.step_size
 

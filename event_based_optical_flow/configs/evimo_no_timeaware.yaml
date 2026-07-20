@@ -1,20 +1,20 @@
 is_dnn: false
 
 data:
-  eval_dt: 4   # for MVSEC evaluation
-  root: "./datasets/MVSEC/hdf5"
+  eval_dt: 1
+  root: "../data/hdf5"
   dataset: "MVSEC"
-  sequence: "outdoor_day1"
-  height: 260
-  width: 346
+  sequence: "15_05"
+  height: 480
+  width: 640
   load_gt_flow: True
-  gt: "./datasets/MVSEC/gt_flow"
+  gt: "../data/gt_flow"
   n_events_per_batch: 30000
   ind1: 0
   ind2: 30000
 
 output:
-  output_dir: "./outputs/paper/no_timeaware/outdoor_day1_dt4"
+  output_dir: "../outputs/secrets/15_05"
   show_interactive_result: false
 
 solver:
@@ -23,8 +23,8 @@ solver:
   patch:
     initialize: "random"
     scale: 5
-    crop_height: 256
-    crop_width: 336
+    crop_height: 480
+    crop_width: 640
     filter_type: "bilinear"
   motion_model: "2d-translation"
   warp_direction: "first"

@@ -1,7 +1,8 @@
 import argparse
-
+import os
 import mlflow
 import torch
+import numpy as np
 
 from configs.parser import YAMLParser
 from dataloader.h5 import H5Loader
@@ -11,6 +12,19 @@ from utils.iwe import compute_pol_iwe
 from utils.utils import load_model, create_model_dir, initialize_quant_results
 from utils.mlflow import log_config, log_results
 from utils.visualization import Visualization
+
+
+def flow_map2event(flow_map, timestamp):
+    timestamp_list = np.full((flow_map.shape[1], flow_map.shape[2]), timestamp)
+    im_grid = np.meshgrid(np.arange(flow_map.shape[2]), np.arange(flow_map.shape[1]), sparse=False)
+    im_grid = np.asarray(im_grid)
+
+    timestamp_list = np.reshape(timestamp_list, (1, timestamp_list.shape[0], timestamp_list.shape[1]))
+
+    flow_w_coor = np.concatenate((timestamp_list, flow_map, im_grid), axis=0).reshape(5, -1)
+    flow_w_coor = flow_w_coor[:, (flow_w_coor[0] != 0) & (flow_w_coor[1] != 0)]
+
+    return flow_w_coor
 
 
 def test(args, config_parser):
@@ -44,7 +58,7 @@ def test(args, config_parser):
     vis = Visualization(config, eval_id=eval_id, path_results=path_results)
 
     # data loader
-    data = H5Loader(config, shuffle=True)
+    data = H5Loader(config, shuffle=False)
     dataloader = torch.utils.data.DataLoader(
         data,
         drop_last=True,
@@ -65,6 +79,7 @@ def test(args, config_parser):
     criteria = eval(config["metrics"]["warping"])(config, device)
     val_results = {}
 
+    order_idx = 0
     # inference loop
     end_test = False
     with torch.no_grad():
@@ -88,6 +103,7 @@ def test(args, config_parser):
 
                 # forward pass
                 x = model(inputs["net_input"].to(device))
+
                 for i in range(len(x["flow"])):
                     x["flow"][i] = x["flow"][i] * config["loss"]["flow_scaling"]
 
@@ -95,6 +111,14 @@ def test(args, config_parser):
                 flow_vis = x["flow"][-1].clone()
                 if config["vis"]["mask_output"]:
                     flow_vis *= inputs["event_mask"].to(device)
+
+                event_convert_flow = flow_map2event(flow_vis.cpu().numpy()[0], data.last_proc_timestamp)
+
+                npy_save_path = os.path.join(path_results, "results", "eval_" + str(eval_id), "flow_npy")
+                if not os.path.exists(npy_save_path):
+                    os.makedirs(npy_save_path)
+                np.save(os.path.join(npy_save_path, str(order_idx + 1) + ".npy"), event_convert_flow)
+                order_idx += 1
 
                 # image of warped events
                 iwe = None

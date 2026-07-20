@@ -282,6 +282,7 @@ class Visualizer:
                 visualize_color_wheel=False,
                 file_prefix=file_prefix,
                 ord=ord,
+                save_flow=True,
             )
         else:
             image = self.visualize_optical_flow(

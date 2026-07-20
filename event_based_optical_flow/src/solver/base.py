@@ -402,10 +402,10 @@ class SolverBase(object):
         events, feat = self.warper.warp_event(
             events, gt_warp, motion_model, direction="first"
         )  # for collapse paper
-        clipped_iwe = self.create_clipped_iwe_for_visualization(
-            events, max_scale=self.iwe_visualize_max_scale
-        )
-        self.visualizer.visualize_image(clipped_iwe, file_prefix="gt_warp")  # type: ignore
+        # clipped_iwe = self.create_clipped_iwe_for_visualization(
+        #     events, max_scale=self.iwe_visualize_max_scale
+        # )
+        # self.visualizer.visualize_image(clipped_iwe, file_prefix="gt_warp")  # type: ignore
 
         # Flow
         if motion_model != "dense-flow":
@@ -417,6 +417,7 @@ class SolverBase(object):
             gt_flow[1],
             visualize_color_wheel=False,
             file_prefix="gt_flow",
+            save_flow=True,
         )
 
     def visualize_test_sequential(

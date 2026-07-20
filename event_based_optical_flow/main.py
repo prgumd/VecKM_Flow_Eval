@@ -98,8 +98,8 @@ def evaluate_mvsec_dataset_with_gt(eval_frame_time_stamp_list, data_config, load
         best_motion = solv.optimize(batch_for_optimization)
         solv.set_previous_frame_best_estimation(best_motion)
         # mask with event
-        flow_error_with_mask = solv.calculate_flow_error(best_motion, gt_flow, timescale=flow_time, events=batch_for_gt_slice)  # type: ignore
-        solv.save_flow_error_as_text(i1, flow_error_with_mask, "flow_error_per_frame_with_mask.txt")  # type: ignore
+        # flow_error_with_mask = solv.calculate_flow_error(best_motion, gt_flow, timescale=flow_time, events=batch_for_gt_slice)  # type: ignore
+        # solv.save_flow_error_as_text(i1, flow_error_with_mask, "flow_error_per_frame_with_mask.txt")  # type: ignore
 
         # Visualization
         solv.visualize_original_sequential(batch_for_gt_slice)
@@ -147,7 +147,7 @@ if __name__ == "__main__":
         visualize_module=viz,
     )
 
-    if args.eval:  # Run evaluation piipeline.
+    if args.eval:  # Run evaluation pipeline.
         if config["is_dnn"]:
             e = "DNN code is not published."
             logger.error(e)

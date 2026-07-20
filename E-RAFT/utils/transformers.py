@@ -17,7 +17,7 @@ def dictionary_of_numpy_arrays_to_tensors(sample):
 
 class EventSequenceToVoxelGrid_Pytorch(object):
     # Source: https://github.com/uzh-rpg/rpg_e2vid/blob/master/utils/inference_utils.py#L480
-    def __init__(self, num_bins, gpu=False, gpu_nr=0, normalize=True, forkserver=True):
+    def __init__(self, num_bins, gpu=False, gpu_nr=0, normalize=True, forkserver=False):
         if forkserver:
             try:
                 th.multiprocessing.set_start_method('forkserver')

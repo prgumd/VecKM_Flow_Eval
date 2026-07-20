@@ -5,6 +5,7 @@ import weakref
 
 import cv2
 import h5py
+import hdf5plugin
 from numba import jit
 import numpy as np
 import torch
@@ -61,6 +62,7 @@ class EventSlicer:
         """
         assert t_start_us < t_end_us
 
+        print(t_start_us, t_end_us)
         # We assume that the times are top-off-day, hence subtract offset:
         t_start_us -= self.t_offset
         t_end_us -= self.t_offset
@@ -68,6 +70,8 @@ class EventSlicer:
         t_start_ms, t_end_ms = self.get_conservative_window_ms(t_start_us, t_end_us)
         t_start_ms_idx = self.ms2idx(t_start_ms)
         t_end_ms_idx = self.ms2idx(t_end_ms)
+
+        print(t_start_ms, t_end_ms, t_start_ms_idx, t_end_ms_idx)
 
         if t_start_ms_idx is None or t_end_ms_idx is None:
             # Cannot guarantee window size anymore
@@ -166,6 +170,7 @@ class EventSlicer:
         return idx_start, idx_end
 
     def ms2idx(self, time_ms: int) -> int:
+        # print(time_ms)
         assert time_ms >= 0
         if time_ms >= self.ms_to_idx.size:
             return None
@@ -196,14 +201,15 @@ class Sequence(Dataset):
         self.mode = mode
         self.name_idx = name_idx
         self.visualize_samples = visualize
-        # Get Test Timestamp File
-        test_timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
-        assert test_timestamp_file.is_file()
-        file = np.genfromtxt(
-            test_timestamp_file,
-            delimiter=','
-        )
-        self.idx_to_visualize = file[:,2]
+        # # Get Test Timestamp File
+        # test_timestamp_file = seq_path / 'test_forward_flow_timestamps.csv'
+        # assert test_timestamp_file.is_file()
+        # file = np.genfromtxt(
+        #     test_timestamp_file,
+        #     delimiter=','
+        # )
+        # print(file)
+        # self.idx_to_visualize = file[:,2]
 
         # Save output dimensions
         self.height = 480
@@ -237,8 +243,9 @@ class Sequence(Dataset):
         h5f_location = h5py.File(str(ev_data_file), 'r')
         self.h5f = h5f_location
         self.event_slicer = EventSlicer(h5f_location)
-        with h5py.File(str(ev_rect_file), 'r') as h5_rect:
-            self.rectify_ev_map = h5_rect['rectify_map'][()]
+        if os.path.exists(str(ev_rect_file)):
+            with h5py.File(str(ev_rect_file), 'r') as h5_rect:
+                self.rectify_ev_map = h5_rect['rectify_map'][()]
 
         self._finalizer = weakref.finalize(self, self.close_callback, self.h5f)
 
@@ -298,28 +305,34 @@ class Sequence(Dataset):
         names = ['event_volume_old', 'event_volume_new']
         ts_start = [self.timestamps_flow[index] - self.delta_t_us, self.timestamps_flow[index]]
         ts_end = [self.timestamps_flow[index], self.timestamps_flow[index] + self.delta_t_us]
-
+        # print(ts_start, ts_end)
         file_index = self.indices[index]
 
         output = {
             'file_index': file_index,
             'timestamp': self.timestamps_flow[index]
         }
-        # Save sample for benchmark submission
-        output['save_submission'] = file_index in self.idx_to_visualize
+        # # Save sample for benchmark submission
+        # output['save_submission'] = file_index in self.idx_to_visualize
         output['visualize'] = self.visualize_samples
+
+        print(ts_start, ts_end)
 
         for i in range(len(names)):
             event_data = self.event_slicer.get_events(ts_start[i], ts_end[i])
-
+            print(event_data)
             p = event_data['p']
             t = event_data['t']
             x = event_data['x']
             y = event_data['y']
 
-            xy_rect = self.rectify_events(x, y)
-            x_rect = xy_rect[:, 0]
-            y_rect = xy_rect[:, 1]
+            if hasattr(self, 'rectify_ev_map'):
+                xy_rect = self.rectify_events(x, y)
+                x_rect = xy_rect[:, 0]
+                y_rect = xy_rect[:, 1]
+            else:
+                x_rect = x
+                y_rect = y
 
             if crop_window is not None:
                 # Cropping (+- 2 for safety reasons)
@@ -420,6 +433,7 @@ class DatasetProvider:
 
         test_sequences = list()
         for child in test_path.iterdir():
+            print("Loading sequence: ", child)
             self.name_mapper_test.append(str(child).split("/")[-1])
             if type == 'standard':
                 test_sequences.append(Sequence(child, representation_type, 'test', delta_t_ms, num_bins,

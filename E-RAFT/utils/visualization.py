@@ -66,6 +66,8 @@ class BaseVisualizer(object):
             name =  split[0] + suffix + "." +split[1]
         if sub_folder is not None:
             name = os.path.join(sub_folder, name)
+
+
         # Visualize
         _, scaling = visualize_optical_flow(flow.detach().cpu().numpy(),
                                             os.path.join(self.visu_path, name),
@@ -118,9 +120,9 @@ class FlowVisualizerEvents(BaseVisualizer):
                                        rotation_angle=False,
                                        horizontal_flip=False,
                                        flip_before_crop=False)
-        # center-crop 256x256
-        crop = CenterCrop(256)
-        events = crop(events)
+        # # center-crop 256x256
+        # crop = CenterCrop(256)
+        # events = crop(events)
         # Save
         save_image(os.path.join(self.visu_path, name_events), events)
 
@@ -162,9 +164,10 @@ class DsecFlowVisualizer(BaseVisualizer):
     def __init__(self, dataloader, save_path, additional_args=None):
         super(DsecFlowVisualizer, self).__init__(dataloader, save_path, additional_args=additional_args)
         # Create Visu folders for every sequence
-        for name in self.additional_args['name_mapping']:
-            os.mkdir(os.path.join(self.visu_path, name))
-            os.mkdir(os.path.join(self.submission_path, name))
+        # for name in self.additional_args['name_mapping']:
+            # name = name[57:]
+            # os.mkdir(os.path.join(self.visu_path, name))
+            # os.mkdir(os.path.join(self.submission_path, name))
 
     def visualize_events(self, image, batch, batch_idx, sequence_name):
         sequence_idx = [i for i, e in enumerate(self.additional_args['name_mapping']) if e == sequence_name][0]
@@ -191,21 +194,33 @@ class DsecFlowVisualizer(BaseVisualizer):
             width=w
         ).numpy()
         name_events = TEMPLATES.EVENTS.format('inference', int(batch['file_index'][batch_idx].item()))
-        out_path = os.path.join(self.visu_path, sequence_name, name_events)
+
+        elements = sequence_name.split('\\')[3:]
+        partial_sequence_name = '\\'.join(elements)
+        out_path = os.path.join(self.visu_path, partial_sequence_name, name_events)
+        # print(self.visu_path, sequence_name, name_events)
         imageio.imsave(out_path, event_image.transpose(1,2,0))
 
     def __call__(self, batch, batch_idx, epoch=None):
         for batch_idx in range(len(batch['file_index'])):
-            if batch['save_submission'][batch_idx]:
-                sequence_name = self.additional_args['name_mapping'][int(batch['name_map'][batch_idx].item())]
-                # Save for Benchmark Submission
-                self.visualize_flow_submission(
-                    seq_name=sequence_name,
-                    flow=batch['flow_est'][batch_idx].clone().cpu().numpy(),
-                    file_index=int(batch['file_index'][batch_idx].item()),
-                )
+            # if batch['save_submission'][batch_idx]:
+            #     sequence_name = self.additional_args['name_mapping'][int(batch['name_map'][batch_idx].item())]
+            #     # Save for Benchmark Submission
+            #     self.visualize_flow_submission(
+            #         seq_name=sequence_name,
+            #         flow=batch['flow_est'][batch_idx].clone().cpu().numpy(),
+            #         file_index=int(batch['file_index'][batch_idx].item()),
+            #     )
             if batch['visualize'][batch_idx]:
                 sequence_name = self.additional_args['name_mapping'][int(batch['name_map'][batch_idx].item())]
+                elements = sequence_name.split('\\')[3:]
+                partial_sequence_name = '\\'.join(elements)
+                print(partial_sequence_name)
+
+
+                if not os.path.exists(os.path.join(self.visu_path, partial_sequence_name)):
+                    os.makedirs(os.path.join(self.visu_path, partial_sequence_name))
+
                 # Visualize Flow
                 self.visualize_flow_colours(
                     batch['flow_est'][batch_idx],
@@ -213,7 +228,7 @@ class DsecFlowVisualizer(BaseVisualizer):
                     epoch=epoch,
                     is_gt=False,
                     fix_scaling=None,
-                    sub_folder=sequence_name
+                    sub_folder=partial_sequence_name
                 )
                 # Visualize Events
                 self.visualize_events(
@@ -275,10 +290,10 @@ def save_image(filepath, tensor):
 def events_to_event_image(event_sequence, height, width, background=None, rotation_angle=None, crop_window=None,
                           horizontal_flip=False, flip_before_crop=True):
     polarity = event_sequence[:, 3] == -1.0
-    x_negative = event_sequence[~polarity, 1].astype(numpy.int)
-    y_negative = event_sequence[~polarity, 2].astype(numpy.int)
-    x_positive = event_sequence[polarity, 1].astype(numpy.int)
-    y_positive = event_sequence[polarity, 2].astype(numpy.int)
+    x_negative = event_sequence[~polarity, 1].astype(int)
+    y_negative = event_sequence[~polarity, 2].astype(int)
+    x_positive = event_sequence[polarity, 1].astype(int)
+    y_positive = event_sequence[polarity, 2].astype(int)
 
     positive_histogram, _, _ = numpy.histogram2d(
         x_positive,
