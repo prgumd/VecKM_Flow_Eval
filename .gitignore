@@ -6,9 +6,10 @@ __pycache__/
 *.pyc
 .git_backups/
 
-# Local dataset root (keep data/README.md tracked)
+# Local dataset root (keep the README and the EVIMO converter tracked)
 /data/*
 !data/README.md
+!data/EVIMO2MVSEC.py
 
 # Large datasets / outputs
 **/datasets/

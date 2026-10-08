@@ -2,19 +2,19 @@ is_dnn: false
 
 data:
   eval_dt: 4   # for MVSEC evaluation
-  root: "./datasets/MVSEC/hdf5"
+  root: "~/local/event_based_optical_flow/datasets/MVSEC/hdf5"
   dataset: "MVSEC"
-  sequence: "outdoor_day1"
+  sequence: "indoor_flying1"
   height: 260
   width: 346
   load_gt_flow: True
-  gt: "./datasets/MVSEC/gt_flow"
+  gt: "~/local/event_based_optical_flow/datasets/MVSEC/gt_flow"
   n_events_per_batch: 30000
-  ind1: 0
-  ind2: 30000
+  ind1: 1130000
+  ind2: 1160000
 
 output:
-  output_dir: "./outputs/paper/no_timeaware/outdoor_day1_dt4"
+  output_dir: "./outputs/paper/no_timeaware/indoor_flying1_dt4"
   show_interactive_result: false
 
 solver:

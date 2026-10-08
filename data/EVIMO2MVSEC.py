@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 # --- Configuration: update these paths before running ---
-SCENE_DIR = Path("../data/scenes/scene_03_04_000000")
-OUTPUT_SCENE_DIR = Path("../data/scenes/scene03_40/03_40")
-GT_FLOW_PATH = Path("../data/gt_flow/03_04_00_gt_flow_dist.npz")
+SCENE_DIR = Path("scenes/scene_03_04_000000")
+OUTPUT_SCENE_DIR = Path("scenes/scene03_40/03_40")
+GT_FLOW_PATH = Path("gt_flow/03_04_00_gt_flow_dist.npz")
 
 data_t_path = SCENE_DIR / "dataset_events_t.npy"
 data_xy_path = SCENE_DIR / "dataset_events_xy.npy"

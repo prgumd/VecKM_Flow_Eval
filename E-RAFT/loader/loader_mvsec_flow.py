@@ -149,8 +149,9 @@ class MvsecFlow(Dataset):
 
         # Either flow_x or flow_y has to be != 0 s.t. the flow is valid
         flow_valid = (flow[0]!=0) | (flow[1] != 0)
-        # Additionally, the car hood (that goes from row 193..260 is not included in the GT. so this is invalid too.
-        flow_valid[193:,:]=False
+        # MVSEC outdoor GT excludes the car hood (rows 193..260). Skip this on other resolutions.
+        if self.image_height == 260:
+            flow_valid[193:, :] = False
 
         return_dict = {'idx': idx,
                        'loader_idx': loader_idx,
@@ -169,10 +170,6 @@ class MvsecFlow(Dataset):
 
             events_old = get_events(event_path_old)
             events_new = get_events(event_path_new)
-
-            # # time reversed
-            # events_old = get_events(event_path_new)
-            # events_new = get_events(event_path_old)
 
             # Timestamp multiplier of 1e6 because the timestamps are saved as seconds and we're used to microseconds
             # This can be relevant for the voxel grid!
@@ -195,13 +192,12 @@ class MvsecFlow(Dataset):
         else:
             raise Exception("Input Type not defined properly! Check config file.")
 
-        # Check Timestamps
-        print(event_path_new)
+        # Check Timestamps. Skip empty slices; the window start is inclusive.
         ev = get_events(event_path_new).to_numpy()
-        ts_ev_min = numpy.min(ev[:,0])
-        ts_ev_max = numpy.max(ev[:,0])
-        # print(ts_ev_min, ts_ev_max, ts_old, ts_new)
-        # assert(ts_ev_min > ts_old and ts_ev_max <= ts_new)
+        if ev.shape[0] > 0:
+            ts_ev_min = numpy.min(ev[:,0])
+            ts_ev_max = numpy.max(ev[:,0])
+            assert ts_ev_min >= ts_old and ts_ev_max <= ts_new
 
         # plot images
         '''
@@ -309,21 +305,6 @@ class MvsecFlow(Dataset):
         sample['event_volume_new'] = self.cropper(sample['event_volume_new'])
         sample['event_volume_old'] = self.cropper(sample['event_volume_old'])
 
-        # for key in sample:
-        #     if isinstance(sample[key], torch.Tensor):
-        #         # Flip the tensor along the vertical axis (dimension -2 for a 2D image)
-        #         # print(sample[key].shape)
-        #
-        #         # #updown flipped
-        #         # sample[key] = torch.flip(sample[key], [-2])
-        #
-        #         # time reversed
-        #         sample['event_volume_new'] = -torch.flip(sample['event_volume_new'], [-3])
-        #         sample['event_volume_old'] = -torch.flip(sample['event_volume_old'], [-3])
-        # # time reversed
-        # sample['flow'][1,:,:] = -sample['flow'][1,:,:]
-        # sample['flow'][0, :, :] = -sample['flow'][0, :, :]
-
         return sample
 
 class MvsecFlowRecurrent(Dataset):
@@ -346,9 +327,6 @@ class MvsecFlowRecurrent(Dataset):
         # ----------------------------------------------------------------------------- #
         assert(idx >= 0)
         assert(idx < len(self))
-
-        # #time reversed
-        # idx = 1396-idx
 
         sequence = []
         j = idx * self.step_size

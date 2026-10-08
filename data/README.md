@@ -1,6 +1,8 @@
 # Dataset Layout
 
-Place evaluation data under `data/` at the repository root. This directory is gitignored; only this README is tracked.
+Place evaluation data under `data/` at the repository root. Dataset files are gitignored. This README and `EVIMO2MVSEC.py` are tracked.
+
+`EVIMO2MVSEC.py` converts an EVIMO scene export into the MVSEC folder layout used by E-RAFT. Run it from this directory after editing the paths at the top of the script.
 
 ## EVIMO / MVSEC (recommended layout)
 

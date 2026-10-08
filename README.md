@@ -106,7 +106,9 @@ cd E-RAFT
 python main.py --path ../data --dataset mvsec --frequency 20
 ```
 
-**Config:** [`E-RAFT/config/mvsec_20.json`](E-RAFT/config/mvsec_20.json)
+`--frequency 20` does not set a 20 Hz window. It selects [`E-RAFT/config/mvsec_20.json`](E-RAFT/config/mvsec_20.json), which uses the depth-aligned loader: one prediction per ground-truth timestamp, with no interpolation. `--frequency 45` is the other E-RAFT option (image-aligned, interpolated flow) and is not used for EVIMO2.
+
+The output rate is the spacing of those ground-truth timestamps. [`data/EVIMO2MVSEC.py`](data/EVIMO2MVSEC.py) slices one event file per timestamp, so each saved flow covers the same `[t0, t1]` interval as one ground-truth frame.
 
 Key fields to edit:
 
@@ -116,6 +118,10 @@ Key fields to edit:
 | `data_loader.test.args.datasets` | Scene / sequence IDs |
 | `data_loader.test.args.filter` | Frame index range |
 | `test.checkpoint` | Path to pretrained weights |
+
+`test.checkpoint` is `checkpoints/dsec.tar`. That is the DSEC-trained model (640×480), used for the DSEC-trained E-RAFT rows. The MVSEC-trained rows use `checkpoints/mvsec_20.tar` instead; point `test.checkpoint` at that file to reproduce them. `mvsec_20.tar` is the DAVIS 346×260 model.
+
+`eval/metrics.py` compares the saved arrays as they are. It does not undistort, change camera coordinates, or divide by `(t1 - t0)`. Ground truth and predictions need to already be in the same units before scoring. In the paper, frame flow is undistorted into normalized camera coordinates and divided by `(t1 - t0)` so the unit is flow per second.
 
 ### 2. TCM (Taming Event Flow)
 
@@ -220,7 +226,7 @@ outputs/
 
 ## Data preparation
 
-To convert raw EVIMO scene exports into MVSEC-compatible layout for E-RAFT, use [`E-RAFT/EVIMO2MVSEC.py`](E-RAFT/EVIMO2MVSEC.py). Configure paths at the top of the script before running.
+To convert raw EVIMO scene exports into MVSEC-compatible layout for E-RAFT, use [`data/EVIMO2MVSEC.py`](data/EVIMO2MVSEC.py). Run it from `data/` and set the paths at the top of the script first.
 
 If you use preprocessed data under `data/scenes/` (see [`data/README.md`](data/README.md)), this step is optional.
 

@@ -70,26 +70,17 @@ class Test(object):
         raise NotImplementedError
 
     def flow_map2event(self, flow_map, event_volume_old):
-        # Convert the flow map to event volume
-        # print(flow_map.shape, event_volume_old.shape)
-        event_flow_map = []
-        event_flow_map_nonzero = np.empty((4,0), int)
+        # Keep flow only at pixels that contain events. Returns a sparse 4xN array.
+        event_flow_map_nonzero = np.empty((4, 0), int)
         im_grid = np.meshgrid(np.arange(flow_map.shape[2]), np.arange(flow_map.shape[1]), sparse=False)
         im_grid = np.asarray(im_grid)
 
         for i in range(event_volume_old.shape[0]):
-            event_flow_map.append(event_volume_old[i]*flow_map)
-            # print(event_flow_map[-1].shape,im_grid.shape)
-            flow_w_coor = np.concatenate((event_flow_map[-1],im_grid),axis=0).reshape(4,-1)
-            flow_w_coor = flow_w_coor[:,(flow_w_coor[0] != 0) & (flow_w_coor[1] != 0)]
-            event_flow_map_nonzero = np.hstack((event_flow_map_nonzero,flow_w_coor))
-            # print(event_flow_map_nonzero.shape)
+            event_flow_map = event_volume_old[i] * flow_map
+            flow_w_coor = np.concatenate((event_flow_map, im_grid), axis=0).reshape(4, -1)
+            flow_w_coor = flow_w_coor[:, (flow_w_coor[0] != 0) & (flow_w_coor[1] != 0)]
+            event_flow_map_nonzero = np.hstack((event_flow_map_nonzero, flow_w_coor))
 
-        # event_flow_map_nonzero = np.array(event_flow_map_nonzero)
-        # print(event_flow_map_nonzero.shape)
-
-
-        # return np.array(event_flow_map)
         return event_flow_map_nonzero
     def _test(self):
         """
@@ -116,47 +107,15 @@ class Test(object):
                     flow_est, flow_gt = self.get_estimation_and_target(batch)
                     flow_convert = flow_est[0].cpu().numpy()
 
-                    # # old event volume
-                    # event_volume_old = batch[0]['event_volume_old'].cpu().numpy()
-                    # event_volume_old_sum = event_volume_old.sum(axis=1)
-                    # event_volume_old_sum = np.where(event_volume_old_sum == 0, 0, 1)
-                    # event_volume_old = np.where(event_volume_old == 0, 0, 1)
-                    # event_flow_convert = self.flow_map2event(flow_convert, event_volume_old[0])
-                    # # print(event_flow_convert[14], event_volume_old[0][14], flow_convert)
-                    # flow_convert = flow_convert * event_volume_old_sum
-
-                    # new event volume
                     event_volume_new = batch[0]['event_volume_new'].cpu().numpy()
                     event_volume_new_sum = event_volume_new.sum(axis=1)
                     event_volume_new_sum = np.where(event_volume_new_sum == 0, 0, 1)
-                    event_volume_new = np.where(event_volume_new == 0, 0, 1)
-                    event_flow_convert = self.flow_map2event(flow_convert, event_volume_new[0])
-                    # print(event_flow_convert[14], event_volume_old[0][14], flow_convert)
                     flow_convert = flow_convert * event_volume_new_sum
-                    # plt.imsave(self.save_path + '/flow/' + str(batch_idx + 1) + '.jpg', flow_convert[0])
 
-                    # print(batch[0]['flow_est'].shape)
                     batch[0]['flow_est'][0] = th.from_numpy(flow_convert).to(self.gpu)
-                    # print(event_volume_old.shape, flow_convert.shape)
-                    # print(batch[0]['idx'])
-                    # print(flow_est[0].)
-                    # np.save(
-                    #     self.save_path+ '/flow/' + str(
-                    #         batch_idx + 1) + '.npy', flow_est[0].cpu().numpy())
-
-                    # # MVSEC
-                    # np.save(
-                    #     self.save_path+ '/flow/' + str(
-                    #         batch_idx + 1) + '.npy', event_flow_convert)
-                    # EVIMO
                     np.save(
                         self.save_path + '/flow/' + str(
                             batch_idx + 1) + '.npy', flow_convert)
-
-                    # time reversed
-                    # np.save(
-                    #     self.save_path + '/flow/' + str(
-                    #         1396 - batch_idx + 1) + '.npy', event_flow_convert)
                 elif self.config['name'] == 'dsec_warm_start':
                     flow_est = batch[0]['flow_est']
                     flow_convert = flow_est[0].cpu().numpy()
@@ -165,10 +124,7 @@ class Test(object):
                     event_volume_new_sum = np.where(event_volume_new_sum == 0, 0, 1)
                     event_volume_new = np.where(event_volume_new == 0, 0, 1)
                     event_flow_convert = self.flow_map2event(flow_convert, event_volume_new[0])
-                    # print(event_flow_convert[14], event_volume_old[0][14], flow_convert)
                     flow_convert = flow_convert * event_volume_new_sum
-                    print(flow_convert.shape)
-
 
                     batch[0]['flow_est'][0] = th.from_numpy(flow_convert).to(self.gpu)
 
